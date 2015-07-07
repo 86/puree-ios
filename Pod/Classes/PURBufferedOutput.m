@@ -106,6 +106,8 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 
 - (void)suspend
 {
+    [self flush];
+    
     [self.timer invalidate];
 
     [super suspend];
