@@ -18,6 +18,8 @@ NSUInteger PURBufferedOutputDefaultLogLimit = 5;
 NSTimeInterval PURBufferedOutputDefaultFlushInterval = 10;
 NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 
+NSInteger PURBufferedOutputRestoreLogLimit = 1000;
+
 @implementation PURBufferedOutputChunk
 
 - (instancetype)initWithLogs:(NSArray *)logs
@@ -87,7 +89,9 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 - (void)start
 {
     [super start];
-
+    
+    [self reduceStoredLogs];
+    
     [self reloadLogStore];
     [self flush];
 
@@ -184,6 +188,11 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 - (void)writeChunk:(PURBufferedOutputChunk *)chunk completion:(void (^)(BOOL))completion
 {
     completion(YES);
+}
+
+- (void)reduceStoredLogs
+{
+    [self.logStore reduceStoredLogsWithLimit:PURBufferedOutputRestoreLogLimit fromOutput:self];
 }
 
 @end

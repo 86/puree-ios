@@ -11,6 +11,8 @@
 #import "PURLog.h"
 #import "PUROutput.h"
 
+#import "YapDatabaseView.h"
+
 static NSString * const LogDatabaseDirectory = @"com.cookpad.PureeData.default";
 static NSString * const LogDatabaseFileName = @"logs.db";
 
@@ -18,6 +20,8 @@ static NSString * const LogDataCollectionNamePrefix = @"log_";
 static NSString * const SystemDataCollectionNamePrefix = @"system_";
 
 static NSString * const LogMetadataKeyOutput = @"_MetadataOutput";
+
+static NSString * const ViewExtentionDateAscending = @"date_ascending";
 
 static NSMutableDictionary *__databases;
 
@@ -94,6 +98,9 @@ NSString *PURLogKey(PUROutput *output, PURLog *log)
         __databases[self.databasePath] = database;
     }
     self.database = database;
+    
+    [self registerView];
+    
     self.databaseConnection = [self.database newConnection];
 
     return self.database && self.databaseConnection;
@@ -178,6 +185,39 @@ NSString *PURLogKey(PUROutput *output, PURLog *log)
     [self.databaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction){
         [transaction removeAllObjectsInAllCollections];
     }];
+}
+
+- (void)reduceStoredLogsWithLimit:(NSInteger)limit fromOutput:(PUROutput *)output
+{
+    NSAssert(self.databaseConnection, @"Database connection is not available");
+    
+    [self.databaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+        NSString *collectionName = PURLogStoreCollectionNameForPattern(output.tagPattern);
+        NSInteger over = [transaction numberOfKeysInCollection:collectionName] - limit;
+        if (over <= 0) { return; }
+        
+        NSMutableArray *removeKeys = [NSMutableArray new];
+        [[transaction ext:ViewExtentionDateAscending] enumerateKeysAndObjectsInGroup:collectionName usingBlock:^(NSString *collection, NSString *key, PURLog *log, NSUInteger index, BOOL *stop) {
+            [removeKeys addObject:key];
+            if (index == over - 1) { *stop = YES; }
+        }];
+        
+        if (removeKeys.count > 0) {
+            [transaction removeObjectsForKeys:removeKeys inCollection:PURLogStoreCollectionNameForPattern(output.tagPattern)];
+        }
+    }];
+}
+
+- (void)registerView
+{
+    YapDatabaseViewGrouping *grouping = [YapDatabaseViewGrouping withObjectBlock:^NSString *(NSString *collection, NSString *key, id object) {
+        return collection;
+    }];
+    YapDatabaseViewSorting *sortingByDate = [YapDatabaseViewSorting withObjectBlock:^NSComparisonResult(NSString *group, NSString *collection1, NSString *key1, PURLog *object1, NSString *collection2, NSString *key2, PURLog *object2) {
+        return [object1.date compare:object2.date];
+    }];
+    YapDatabaseView *dateAscendingView = [[YapDatabaseView alloc] initWithGrouping:grouping sorting:sortingByDate];
+    [self.database registerExtension:dateAscendingView withName:ViewExtentionDateAscending];
 }
 
 @end

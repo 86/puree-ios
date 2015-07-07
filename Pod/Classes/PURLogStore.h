@@ -26,4 +26,6 @@ typedef void(^PURLogStoreRetrieveCompletionBlock)(NSArray *logs);
 - (void)removeLogs:(NSArray *)logs fromOutput:(PUROutput *)output;
 - (void)clearAll;
 
+- (void)reduceStoredLogsWithLimit:(NSInteger)limit fromOutput:(PUROutput *)output;
+
 @end
