@@ -119,17 +119,20 @@ NSString *PURLogKey(PUROutput *output, PURLog *log)
 - (void)retrieveLogsForPattern:(NSString *)pattern output:(PUROutput *)output completion:(PURLogStoreRetrieveCompletionBlock)completion;
 {
     NSAssert(self.databaseConnection, @"Database connection is not available");
-
-    [self.databaseConnection readWithBlock:^(YapDatabaseReadTransaction *transaction){
+    
+    [self.databaseConnection readWithBlock:^(YapDatabaseReadTransaction *transaction) {
         NSMutableArray *logs = [NSMutableArray new];
         NSString *keyPrefix = [NSStringFromClass([output class]) stringByAppendingString:@"_"];
-        [transaction enumerateRowsInCollection:PURLogStoreCollectionNameForPattern(output.tagPattern)
-                                    usingBlock:^(NSString *key, PURLog *log, id metadata, BOOL *stop){
-                                        [logs addObject:log];
-                                    }
-                                    withFilter:^BOOL(NSString *key){
-                                        return [key hasPrefix:keyPrefix];
-                                    }];
+        NSString *collectionName = PURLogStoreCollectionNameForPattern(output.tagPattern);
+        NSRange range = NSMakeRange(0, [transaction numberOfKeysInCollection:collectionName]);
+        [[transaction ext:ViewExtentionDateAscending] enumerateRowsInGroup:collectionName
+                                                               withOptions:0
+                                                                     range:range
+                                                                usingBlock:^(NSString *collection, NSString *key, PURLog *log, id metadata, NSUInteger index, BOOL *stop){
+                                                                    [logs addObject:log];
+                                                                } withFilter:^BOOL(NSString *collection, NSString *key) {
+                                                                    return [key hasPrefix:keyPrefix];
+                                                                }];
         completion(logs);
     }];
 }
