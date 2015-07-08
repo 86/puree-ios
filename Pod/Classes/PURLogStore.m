@@ -125,10 +125,10 @@ NSString *PURLogKey(PUROutput *output, PURLog *log)
         NSString *keyPrefix = [NSStringFromClass([output class]) stringByAppendingString:@"_"];
         NSString *collectionName = PURLogStoreCollectionNameForPattern(output.tagPattern);
         NSRange range = NSMakeRange(0, [transaction numberOfKeysInCollection:collectionName]);
-        [[transaction ext:ViewExtentionDateAscending] enumerateRowsInGroup:collectionName
+        [[transaction ext:ViewExtentionDateAscending] enumerateKeysAndObjectsInGroup:collectionName
                                                                withOptions:0
                                                                      range:range
-                                                                usingBlock:^(NSString *collection, NSString *key, PURLog *log, id metadata, NSUInteger index, BOOL *stop){
+                                                                usingBlock:^(NSString *collection, NSString *key, PURLog *log, NSUInteger index, BOOL *stop){
                                                                     [logs addObject:log];
                                                                 } withFilter:^BOOL(NSString *collection, NSString *key) {
                                                                     return [key hasPrefix:keyPrefix];
@@ -200,7 +200,7 @@ NSString *PURLogKey(PUROutput *output, PURLog *log)
         if (over <= 0) { return; }
         
         NSMutableArray *removeKeys = [NSMutableArray new];
-        [[transaction ext:ViewExtentionDateAscending] enumerateKeysAndObjectsInGroup:collectionName usingBlock:^(NSString *collection, NSString *key, PURLog *log, NSUInteger index, BOOL *stop) {
+        [[transaction ext:ViewExtentionDateAscending] enumerateKeysInGroup:collectionName usingBlock:^(NSString *collection, NSString *key, NSUInteger index, BOOL *stop) {
             [removeKeys addObject:key];
             if (index == over - 1) { *stop = YES; }
         }];
