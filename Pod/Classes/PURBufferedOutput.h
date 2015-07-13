@@ -13,6 +13,7 @@ extern NSString * const PURBufferedOutputSettingsLogLimitKey;
 extern NSString * const PURBufferedOutputSettingsFlushIntervalKey;
 extern NSString * const PURBufferedOutputSettingsMaxRetryCountKey;
 extern NSString * const PURBufferedOutputSettingsRestoreLogLimitKey;
+extern NSString * const PURBufferedOutputSettingsFlushBeforeSuspendingKey;
 
 @interface PURBufferedOutputChunk : NSObject
 
@@ -32,6 +33,7 @@ extern NSString * const PURBufferedOutputSettingsRestoreLogLimitKey;
 @property (nonatomic, readonly) NSTimeInterval flushInterval;
 @property (nonatomic, readonly) NSUInteger maxRetryCount;
 @property (nonatomic, readonly) NSUInteger restoreLogLimit;
+@property (nonatomic, readonly) BOOL flushBeforeSuspending;
 @property (nonatomic, readonly) CFAbsoluteTime recentFlushTime;
 @property (nonatomic, readonly) NSTimer *timer;
 @property (nonatomic, readonly) NSOperationQueue *writeChunkQueue;
