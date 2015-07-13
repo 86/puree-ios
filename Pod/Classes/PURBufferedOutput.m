@@ -13,12 +13,12 @@
 NSString * const PURBufferedOutputSettingsLogLimitKey = @"BufferedOutputLogLimit";
 NSString * const PURBufferedOutputSettingsFlushIntervalKey = @"BufferedOutputFlushInterval";
 NSString * const PURBufferedOutputSettingsMaxRetryCountKey = @"BufferedOutputMaxRetryCount";
+NSString * const PURBufferedOutputSettingsRestoreLogLimitKey = @"BufferedOutputRestoreLogLimit";
 
 NSUInteger PURBufferedOutputDefaultLogLimit = 5;
 NSTimeInterval PURBufferedOutputDefaultFlushInterval = 10;
 NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
-
-NSInteger PURBufferedOutputRestoreLogLimit = 1000;
+NSUInteger PURBufferedOutputRestoreLogLimit = 0;
 
 @implementation PURBufferedOutputChunk
 
@@ -40,6 +40,7 @@ NSInteger PURBufferedOutputRestoreLogLimit = 1000;
 @property (nonatomic) NSUInteger logLimit;
 @property (nonatomic) NSTimeInterval flushInterval;
 @property (nonatomic) NSUInteger maxRetryCount;
+@property (nonatomic) NSUInteger restoreLogLimit;
 @property (nonatomic) CFAbsoluteTime recentFlushTime;
 @property (nonatomic) NSTimer *timer;
 @property (nonatomic) NSOperationQueue *writeChunkQueue;
@@ -78,6 +79,9 @@ NSInteger PURBufferedOutputRestoreLogLimit = 1000;
 
     value = settings[PURBufferedOutputSettingsMaxRetryCountKey];
     self.maxRetryCount = value ? [value unsignedIntegerValue] : PURBufferedOutputDefaultMaxRetryCount;
+    
+    value = settings[PURBufferedOutputSettingsRestoreLogLimitKey];
+    self.restoreLogLimit = value ? [value unsignedIntegerValue] : PURBufferedOutputRestoreLogLimit;
 
     self.buffer = [NSMutableArray new];
 
@@ -192,7 +196,9 @@ NSInteger PURBufferedOutputRestoreLogLimit = 1000;
 
 - (void)reduceStoredLogs
 {
-    [self.logStore reduceStoredLogsWithLimit:PURBufferedOutputRestoreLogLimit fromOutput:self];
+    if (self.restoreLogLimit) {
+        [self.logStore reduceStoredLogsWithLimit:self.restoreLogLimit fromOutput:self];
+    }
 }
 
 @end
