@@ -112,7 +112,6 @@ BOOL PURBufferedOutputFlushBeforeSuspending = NO;
 {
     [super resume];
 
-    [self reloadLogStore];
     [self flush];
 
     [self setUpTimer];
